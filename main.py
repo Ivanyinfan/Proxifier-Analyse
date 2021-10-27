@@ -15,13 +15,21 @@ MIN_LEN2 = 3
 PRO_PATTERN = re.compile('.*.exe')
 TYPE_PATTERN = re.compile('^close.*')
 BYTE_PATTERN = re.compile('\s*(\d+)\s?bytes')
+
+UNITS = ['B','KB','MB','GB','TB']
+def formatNumber(num:int):
+    k,i=num/1024,0
+    while k>1 and i+1<len(UNITS)-1: k,num,i=k/1024,k,i+1
+    return f'{num:.2f}{UNITS[i]}'
+
 file = "C:\\Users\\fany\\Documents\\Proxifier\\Log.txt"
+output = "C:\\Users\\fany\\Documents\\Proxifier-Analyse\\Analyse.txt"
 f = open(file,'r')
 line:str
 pro_add_map = defaultdict(lambda: defaultdict(int))
 pro_map = defaultdict(int)
 valid = 0
-for i,line in enumerate (f):
+for lineNum,line in enumerate (f):
     lLine:list = line.lower().split()
     if len(lLine)<MIN_LEN: continue
     pro = PRO_PATTERN.fullmatch(lLine[PRO_POS])
@@ -41,9 +49,28 @@ for i,line in enumerate (f):
     valid = valid + 1
     pro_add_map[pro_name][address]+= sent + receive
     pro_map[pro_name] += sent + receive
-print(f'total line: {i}, valid line: {valid}')
+f.close()
+pro_list = list(pro_map.items())
+pro_list.sort(key=lambda x: x[1], reverse=True)
+pro_add_list = dict()
 for pro_name, add_map in pro_add_map.items():
-    print(f'{pro_name}: {pro_map[pro_name]}')
-    for add, value in add_map.items():
-        print(f'\t{add}: {value}')
+    add_list = list(add_map.items())
+    add_list.sort(key=lambda x: x[1], reverse=True)
+    pro_add_list[pro_name]=add_list
+total = sum(pro_map.values())
+for i,e in enumerate(pro_list): pro_list[i]=(e[0], formatNumber(e[1]),f'{e[1]/total:2.2%}')
+for pro_name, v in pro_add_list.items():
+    for i, e in enumerate(v): v[i]=(e[0], formatNumber(e[1]), f'{e[1]/pro_map[pro_name]:2.2%}')
+f = open(output, 'w')
+f.write(f'total line: {lineNum}, valid line: {valid}\n\n')
+f.write(f'total:\t{formatNumber(total)}\n\n')
+for e in pro_list:
+    f.write(f'{e[0]}:\t{e[1]}\t{e[2]}\n')
+f.write('\n')
+for e in pro_list:
+    f.write(f'{e[0]}:\t{e[1]}\t{e[2]}\n')
+    for add_val in pro_add_list[e[0]]:
+        f.write(f'\t{add_val[0]}:\t{add_val[1]}\t{add_val[2]}\n')
+    f.write('\n')
+f.close()
 
