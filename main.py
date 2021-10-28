@@ -4,14 +4,13 @@ import re
 TIME_POS = 0
 PRO_POS = 2
 ADDRESS_POS = 4
-# TYPE_POS = 4
-# SEND_POS = 5
-# RECV_POS = 6
-MIN_LEN = 5
+MIN_LEN = 6
+
 TYPE_POS = 0
 SEND_POS = 1
 RECV_POS = 2
 MIN_LEN2 = 3
+
 PRO_PATTERN = re.compile('.*.exe')
 TYPE_PATTERN = re.compile('^close.*')
 BYTE_PATTERN = re.compile('\s*(\d+)\s?bytes')
@@ -30,13 +29,13 @@ pro_add_map = defaultdict(lambda: defaultdict(int))
 pro_map = defaultdict(int)
 valid = 0
 for lineNum,line in enumerate (f):
-    lLine:list = line.lower().split()
+    lLine:list = line.lower().split(maxsplit=5)
     if len(lLine)<MIN_LEN: continue
     pro = PRO_PATTERN.fullmatch(lLine[PRO_POS])
     if not pro: continue
     pro_name:str = pro.string
     address = lLine[ADDRESS_POS]
-    half2 = ' '.join(lLine[MIN_LEN:])
+    half2 = lLine[-1]
     lHalf2 = half2.split(',')
     if len(lHalf2)<MIN_LEN2: continue
     if lHalf2[TYPE_POS]!='close': continue
